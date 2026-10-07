@@ -1,0 +1,419 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IUB Weekly Scopus Publications Dashboard</title>
+<style>
+  :root {
+    --navy: #0d2240;
+    --gold: #c9a227;
+    --bg: #f4f6f9;
+    --card-bg: #ffffff;
+    --text: #1d2733;
+    --muted: #5c6b7a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy), #163257);
+    color: #fff;
+    padding: 28px 32px;
+  }
+  header h1 { margin: 0 0 4px; font-size: 24px; }
+  header p { margin: 0; color: #cfd9e6; font-size: 14px; }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 18px 32px;
+    background: #fff;
+    border-bottom: 1px solid #e3e8ee;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .controls input[type=text] {
+    flex: 1 1 240px;
+    padding: 9px 12px;
+    border: 1px solid #d3dae3;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .controls select {
+    padding: 9px 12px;
+    border: 1px solid #d3dae3;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+  }
+  .stats {
+    padding: 14px 32px 0;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid #e3e8ee;
+    border-radius: 8px;
+    padding: 10px 16px;
+    min-width: 130px;
+    text-align: center;
+  }
+  .stat-card .num { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .stat-card .label { font-size: 12px; color: var(--muted); }
+  main { padding: 20px 32px 48px; display: flex; gap: 24px; align-items: flex-start; }
+  #deptList {
+    flex: 0 0 240px;
+    background: var(--card-bg);
+    border: 1px solid #e3e8ee;
+    border-radius: 8px;
+    overflow: hidden;
+    position: sticky;
+    top: 92px;
+  }
+  #deptList .dept-item {
+    padding: 11px 14px;
+    font-size: 13.5px;
+    cursor: pointer;
+    border-bottom: 1px solid #eef1f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #deptList .dept-item:hover { background: #f0f4f9; }
+  #deptList .dept-item.active { background: var(--navy); color: #fff; }
+  #deptList .dept-item .count {
+    background: #e7edf5;
+    color: var(--navy);
+    border-radius: 10px;
+    font-size: 11px;
+    padding: 1px 8px;
+    font-weight: 600;
+  }
+  #deptList .dept-item.active .count { background: var(--gold); color: #2a2103; }
+  #cards { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+  .pub-card {
+    background: var(--card-bg);
+    border: 1px solid #e3e8ee;
+    border-left: 5px solid var(--gold);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .pub-card h3 { margin: 0 0 6px; font-size: 16.5px; line-height: 1.35; }
+  .pub-card h3 a { color: var(--navy); text-decoration: none; }
+  .pub-card h3 a:hover { text-decoration: underline; }
+  .meta { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 12px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+  }
+  .badge.dept { background: #e7edf5; color: var(--navy); }
+  .badge.oa { background: #e6f6ea; color: #1e7a37; }
+  .badge.type { background: #fdf1df; color: #93650c; }
+  .authors { font-size: 13px; margin-bottom: 6px; }
+  .authors .iub { font-weight: 700; color: var(--navy); }
+  .footer-note { font-size: 11.5px; color: var(--muted); margin-top: 60px; text-align: center; }
+  #empty { padding: 40px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎓 IUB Weekly Scopus Publications</h1>
+  <p id="weekLabel">Week of publications — click a department to filter, or search by title/author.</p>
+</header>
+
+<div class="controls">
+  <input type="text" id="searchBox" placeholder="Search by title, author, or journal...">
+</div>
+
+<div class="stats" id="statsRow"></div>
+
+<main>
+  <div id="deptList"></div>
+  <div id="cards"></div>
+</main>
+
+<div class="footer-note">Generated from the weekly Scopus export for IUB faculty publications.</div>
+
+<script>
+const PUBLICATIONS = [
+    {
+        "title":  "Strengthening disaster resilience in coastal Bangladesh: The roles of disaster knowledge, government policy support, social capital, and community risk perception",
+        "allAuthors":  "Hafiz M.M.-U.; Meem M.S.; Hasan I.; Chakma P.; Ansary N.; Das P.C.; Shahriar M.S.; Al Mamun M.A.",
+        "iubAuthors":  [
+                           "Hasan I."
+                       ],
+        "department":  "Department of Global Studies and Governance",
+        "year":  2026,
+        "source":  "Progress in Disaster Science",
+        "doi":  "10.1016/j.pdisas.2026.100728",
+        "link":  "https://www.scopus.com/pages/publications/105051214547?origin=resultslist",
+        "oa":  "All Open Access; Gold Open Access",
+        "type":  "Article"
+    },
+    {
+        "title":  "CRISPR–Cas9 genome editing: technological advances, delivery strategies and precision engineering of primary cells for therapeutic application in genetic disorders and diabetes mellitus",
+        "allAuthors":  "Islam M.N.; Islam M.M.; Feng H.; Bellah S.F.; Zaman Miah M.M.; Hossain M.S.",
+        "iubAuthors":  [
+                           "Hossain M.S."
+                       ],
+        "department":  "Department of Pharmacy",
+        "year":  2026,
+        "source":  "Molecular Biology Reports",
+        "doi":  "10.1007/s11033-026-12771-1",
+        "link":  "https://www.scopus.com/pages/publications/105051026268?origin=resultslist",
+        "oa":  "",
+        "type":  "Review"
+    },
+    {
+        "title":  "Community-based approach for thalassemia patients: a perspective from Bangladesh",
+        "allAuthors":  "Islam F.; Zajbe Z.; Al Mossabbir A.; Hossain M.S.",
+        "iubAuthors":  [
+                           "Hossain M.S."
+                       ],
+        "department":  "Dept. of Environmental Science and Management",
+        "year":  2026,
+        "source":  "Journal of Rare Diseases (Germany)",
+        "doi":  "10.1007/s44162-026-00237-8",
+        "link":  "https://www.scopus.com/pages/publications/105051292743?origin=resultslist",
+        "oa":  "All Open Access; Gold Open Access",
+        "type":  "Article"
+    },
+    {
+        "title":  "A Machine-Learning-Based Diagnosis of English Language Anxiety Among Rural High School Students in a Non-Native English-Speaking Country",
+        "allAuthors":  "Sourov M.N.S.; Rahman M.A.; Juhana A.H.; Sultana S.; Rahman A.; Habib M.T.",
+        "iubAuthors":  [
+                           "Sourov M.N.S.",
+                           "Rahman M.A.",
+                           "Juhana A.H.",
+                           "Habib M.T."
+                       ],
+        "department":  "Department of Computer Science and Engineering",
+        "year":  2026,
+        "source":  "Human-Centric Intelligent Systems",
+        "doi":  "10.1007/s44230-026-00176-z",
+        "link":  "https://www.scopus.com/pages/publications/105051204479?origin=resultslist",
+        "oa":  "All Open Access; Gold Open Access",
+        "type":  "Article"
+    },
+    {
+        "title":  "THE CAROUSEL LENS I: A SPECTROSCOPIC SURVEY OF THE CAROUSEL LENS FIELD",
+        "allAuthors":  "O’donnell J.H.; Williams D.Y.; Jeltema T.E.; Sheu W.; Urcelay F.; Huang X.; Jones T.; Glazebrook K.; Barone T.M.; Cikota A.; Bian F.; Storfer C.J.; Ballard D.J.; Caminha G.; Kacprzak G.G.; Nanayakkara T.; Sahu N.; Skobe H.; Shajib A.J.; Tran K.-V.; Keerthi Vasan G.C.",
+        "iubAuthors":  [
+                           "Shajib A.J."
+                       ],
+        "department":  "Center for Astronomy, Space Science and Astrophysics",
+        "year":  2026,
+        "source":  "Open Journal of Astrophysics",
+        "doi":  "10.33232/001c.170181",
+        "link":  "https://www.scopus.com/pages/publications/105050708344?origin=resultslist",
+        "oa":  "All Open Access; Gold Open Access; Green Open Access",
+        "type":  "Article"
+    },
+    {
+        "title":  "PITNet: Physics-Informed Trajectory Network for Smooth 7-DoF Robotic Arm Trajectories in Dynamic Environments",
+        "allAuthors":  "Ahmed N.; Babu M.A.; Mollah M.M.H.; Ahmmed M.M.; Rahman M.M.; Mahmud M.",
+        "iubAuthors":  [
+                           "Ahmed N.",
+                           "Babu M.A.",
+                           "Rahman M.M."
+                       ],
+        "department":  "Department of Physical Sciences",
+        "year":  2026,
+        "source":  "Proceedings - 2025 IEEE/WIC International Conference on Web Intelligence and Intelligent Agent Technology, WI-IAT 2025",
+        "doi":  "10.1109/WI-IAT67162.2025.00090",
+        "link":  "https://www.scopus.com/pages/publications/105051543885?origin=resultslist",
+        "oa":  "",
+        "type":  "Conference paper"
+    },
+    {
+        "title":  "AI-driven forecast-integrated planning of hybrid renewable microgrids for climate-resilient rural electrification",
+        "allAuthors":  "Refat K.A.; Hasan M.M.; Feroz Ali M.; Abdur Razzak M.; Rubel M.; Shakil S.M.; Al Amin M.",
+        "iubAuthors":  [
+                           "Abdur Razzak M."
+                       ],
+        "department":  "Department of Electrical and Electronic Engineering",
+        "year":  2026,
+        "source":  "Energy Conversion and Management: X",
+        "doi":  "10.1016/j.ecmx.2026.102281",
+        "link":  "https://www.scopus.com/pages/publications/105051241011?origin=resultslist",
+        "oa":  "All Open Access; Gold Open Access",
+        "type":  "Article"
+    },
+    {
+        "title":  "Association of serum vitamin D deficiency and inadequate sunlight exposure with Parkinson\u0027s disease risk: A pilot study in Bangladesh",
+        "allAuthors":  "Islam M.R.; Sahabuddin M.; Sheba N.H.; Hossain Z.Z.",
+        "iubAuthors":  [
+                           "Islam M.R.",
+                           "Sahabuddin M.",
+                           "Hossain Z.Z."
+                       ],
+        "department":  "Department of Public Health",
+        "year":  2026,
+        "source":  "Heliyon",
+        "doi":  "10.1016/j.heliyon.2026.e45499",
+        "link":  "https://www.scopus.com/pages/publications/105051329131?origin=resultslist",
+        "oa":  "All Open Access; Gold Open Access",
+        "type":  "Article"
+    },
+    {
+        "title":  "Sambhu Mitra’s Adaptation of Ibsen’s A Doll’s House travels to Bangladesh",
+        "allAuthors":  "Ahsanuzzaman A.",
+        "iubAuthors":  [
+                           "Ahsanuzzaman A."
+                       ],
+        "department":  "Department of English and Modern Languages",
+        "year":  2026,
+        "source":  "Travelling Texts: Translating Nineteenth-Century European Classics into Indian Languages",
+        "doi":  "10.4324/9781003600572-15",
+        "link":  "https://www.scopus.com/pages/publications/105051019583?origin=resultslist",
+        "oa":  "",
+        "type":  "Book chapter"
+    },
+    {
+        "title":  "The emotional geographies of a university English language center: Institutional relations, exclusion, and vulnerability",
+        "allAuthors":  "Rahaman A.; Sumayya",
+        "iubAuthors":  [
+                           "Rahaman A.",
+                           "Sumayya"
+                       ],
+        "department":  "Department of English and Modern Languages",
+        "year":  2026,
+        "source":  "Acta Psychologica",
+        "doi":  "10.1016/j.actpsy.2026.107849",
+        "link":  "https://www.scopus.com/pages/publications/105051446194?origin=resultslist",
+        "oa":  "All Open Access; Gold Open Access",
+        "type":  "Article"
+    },
+    {
+        "title":  "Synthesis, Characterization, and Comparative Biological Evaluation of Hydroxylated Isoniazid Schiff Base Derivatives: An In-Vitro, In-Vivo and In-Silico Study",
+        "allAuthors":  "Rahman M.O.; Raza U.; Khan M.R.; Hossain M.R.; Akter M.R.; Naeem N.; Parul M.R.; Abser M.N.; Alam K.M.K.; Alam M.N.",
+        "iubAuthors":  [
+                           "Akter M.R."
+                       ],
+        "department":  "Department of Pharmacy",
+        "year":  2026,
+        "source":  "Journal of Molecular Structure",
+        "doi":  "10.1016/j.molstruc.2026.147587",
+        "link":  "https://www.scopus.com/pages/publications/105050734438?origin=resultslist",
+        "oa":  "",
+        "type":  "Article"
+    },
+    {
+        "title":  "A Systematic Approach to Transforming Use Cases into Functional Requirements",
+        "allAuthors":  "Sayam M.K.; Islam M.; Hosen M.I.; Alif A.K.; Khan R.H.",
+        "iubAuthors":  [
+                           "Sayam M.K.",
+                           "Islam M.",
+                           "Hosen M.I.",
+                           "Alif A.K.",
+                           "Khan R.H."
+                       ],
+        "department":  "Department of Computer Science and Engineering",
+        "year":  2026,
+        "source":  "Frontiers in Artificial Intelligence and Applications",
+        "doi":  "10.3233/FAIA260748",
+        "link":  "https://www.scopus.com/pages/publications/105050734822?origin=resultslist",
+        "oa":  "All Open Access; Hybrid Gold Open Access",
+        "type":  "Conference paper"
+    }
+];
+
+let activeDept = "ALL";
+
+function departmentCounts() {
+  const map = {};
+  PUBLICATIONS.forEach(p => { map[p.department] = (map[p.department] || 0) + 1; });
+  return map;
+}
+
+function renderStats() {
+  const total = PUBLICATIONS.length;
+  const deptCount = Object.keys(departmentCounts()).length;
+  const oaCount = PUBLICATIONS.filter(p => p.oa).length;
+  const years = [...new Set(PUBLICATIONS.map(p => p.year))].sort();
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="num">${total}</div><div class="label">Total Publications</div></div>
+    <div class="stat-card"><div class="num">${deptCount}</div><div class="label">Departments Involved</div></div>
+    <div class="stat-card"><div class="num">${oaCount}</div><div class="label">Open Access</div></div>
+    <div class="stat-card"><div class="num">${years.join(', ')}</div><div class="label">Publication Year(s)</div></div>
+  `;
+}
+
+function renderDeptList() {
+  const counts = departmentCounts();
+  const depts = Object.keys(counts).sort((a,b) => counts[b]-counts[a]);
+  let html = `<div class="dept-item ${activeDept==='ALL'?'active':''}" data-dept="ALL"><span>All Departments</span><span class="count">${PUBLICATIONS.length}</span></div>`;
+  depts.forEach(d => {
+    html += `<div class="dept-item ${activeDept===d?'active':''}" data-dept="${d.replace(/"/g,'&quot;')}"><span>${d}</span><span class="count">${counts[d]}</span></div>`;
+  });
+  document.getElementById('deptList').innerHTML = html;
+  document.querySelectorAll('.dept-item').forEach(el => {
+    el.addEventListener('click', () => {
+      activeDept = el.getAttribute('data-dept');
+      renderDeptList();
+      renderCards();
+    });
+  });
+}
+
+function renderCards() {
+  const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+
+  let list = PUBLICATIONS.filter(p => {
+    const matchesDept = activeDept === "ALL" || p.department === activeDept;
+    const haystack = (p.title + " " + p.allAuthors + " " + p.source).toLowerCase();
+    const matchesSearch = !searchTerm || haystack.includes(searchTerm);
+    return matchesDept && matchesSearch;
+  });
+
+  list.sort((a,b) => a.department.localeCompare(b.department));
+
+  if (list.length === 0) {
+    document.getElementById('cards').innerHTML = `<div id="empty">No publications match your filters.</div>`;
+    return;
+  }
+
+  document.getElementById('cards').innerHTML = list.map(p => {
+    const authorsHtml = p.allAuthors.split(';').map(a => {
+      const name = a.trim();
+      const isIub = p.iubAuthors.some(iu => name.startsWith(iu) || iu.startsWith(name));
+      return isIub ? `<span class="iub">${name}</span>` : name;
+    }).join('; ');
+
+    return `
+    <div class="pub-card">
+      <h3><a href="${p.link}" target="_blank" rel="noopener">${p.title}</a></h3>
+      <div class="meta">${p.source} • ${p.year} • DOI: ${p.doi}</div>
+      <div>
+        <span class="badge dept">🏛️ ${p.department}</span>
+        <span class="badge type">${p.type}</span>
+        ${p.oa ? `<span class="badge oa">🔓 ${p.oa}</span>` : ''}
+      </div>
+      <div class="authors">${authorsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('searchBox').addEventListener('input', renderCards);
+
+renderStats();
+renderDeptList();
+renderCards();
+</script>
+
+</body>
+</html>
+
