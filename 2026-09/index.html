@@ -105,6 +105,27 @@
     border-radius: 8px;
     padding: 16px 18px;
   }
+  .dept-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14.5px;
+    font-weight: 700;
+    margin-top: 10px;
+  }
+  .dept-heading:first-child { margin-top: 0; }
+  .dept-heading .count {
+    background: var(--gold);
+    color: #2a2103;
+    border-radius: 10px;
+    font-size: 11px;
+    padding: 1px 8px;
+    font-weight: 600;
+  }
   .pub-card h3 { margin: 0 0 6px; font-size: 16.5px; line-height: 1.35; }
   .pub-card h3 a { color: var(--navy); text-decoration: none; }
   .pub-card h3 a:hover { text-decoration: underline; }
@@ -555,25 +576,32 @@ function renderCards() {
     return;
   }
 
-  document.getElementById('cards').innerHTML = list.map(p => {
+  let html = '';
+  let currentDept = null;
+  list.forEach(p => {
+    if (p.department !== currentDept) {
+      currentDept = p.department;
+      const deptCount = list.filter(x => x.department === currentDept).length;
+      html += `<div class="dept-heading"><span>🏛️ ${currentDept}</span><span class="count">${deptCount}</span></div>`;
+    }
     const authorsHtml = p.allAuthors.split(';').map(a => {
       const name = a.trim();
       const isIub = p.iubAuthors.some(iu => name.startsWith(iu) || iu.startsWith(name));
       return isIub ? `<span class="iub">${name}</span>` : name;
     }).join('; ');
 
-    return `
+    html += `
     <div class="pub-card">
       <h3><a href="${p.link}" target="_blank" rel="noopener">${p.title}</a></h3>
       <div class="meta">${p.source} • ${p.year} • DOI: ${p.doi}</div>
       <div>
-        <span class="badge dept">🏛️ ${p.department}</span>
         <span class="badge type">${p.type}</span>
         ${p.oa ? `<span class="badge oa">🔓 ${p.oa}</span>` : ''}
       </div>
       <div class="authors">${authorsHtml}</div>
     </div>`;
-  }).join('');
+  });
+  document.getElementById('cards').innerHTML = html;
 }
 
 document.getElementById('searchBox').addEventListener('input', renderCards);
